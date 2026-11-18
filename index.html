@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="دليل الحسابات">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0f4c5c">
+<title>دليل الحسابات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#f3f5f7; --card:#fff; --ink:#1d2730; --muted:#6b7784; --line:#e3e8ed;
+    --pri:#0f4c5c; --pri2:#e6f1f3; --ok:#1f8a4c; --okbg:#e7f6ed; --warn:#b4541a; --danger:#c0392b;
+    --bank:#0f4c5c; --insta:#6a3fb5; --wallet:#c0392b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Cairo',system-ui,sans-serif;font-size:15px}
+  button,input,select,textarea{font-family:inherit;font-size:15px}
+  .hidden{display:none!important}
+
+  /* ---------- Login ---------- */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-box{background:var(--card);border-radius:16px;padding:28px 22px;width:100%;max-width:380px;box-shadow:0 6px 24px rgba(0,0,0,.06)}
+  .login-box h1{margin:0 0 4px;font-size:22px;color:var(--pri)}
+  .login-box p{margin:0 0 18px;color:var(--muted);font-size:13px}
+
+  /* ---------- Header ---------- */
+  header{position:sticky;top:0;z-index:10;background:var(--pri);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 12px}
+  .hrow{display:flex;align-items:center;gap:8px}
+  .hrow h1{flex:1;margin:0;font-size:18px}
+  .hbtn{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:10px;padding:7px 12px;font-weight:600;cursor:pointer}
+  .search{width:100%;margin-top:10px;border:0;border-radius:12px;padding:11px 14px;outline:none}
+  .tools{padding:10px 14px 4px;display:flex;flex-direction:column;gap:8px}
+  .bankbar{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+  .bankbar label{font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap}
+  .bankbar select{flex:1;min-width:0;border:0;background:transparent;font-weight:700;color:var(--pri);outline:none}
+  .only{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:0 4px}
+
+  /* ---------- List ---------- */
+  main{padding:6px 14px 100px;max-width:720px;margin:0 auto}
+  .count{color:var(--muted);font-size:12px;margin:4px 2px 8px}
+  .card{background:var(--card);border-radius:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);overflow:hidden}
+  .card-head{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer}
+  .avatar{flex:none;width:40px;height:40px;border-radius:12px;background:var(--pri2);color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:700}
+  .ch-main{flex:1;min-width:0}
+  .name{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta{color:var(--muted);font-size:12px}
+  .badge{flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--okbg);color:var(--ok)}
+  .chev{flex:none;color:var(--muted);transition:transform .2s}
+  .card.open .chev{transform:rotate(180deg)}
+  .card-body{border-top:1px solid var(--line);padding:10px 12px 12px;background:#fafbfc}
+
+  .acc{background:#fff;border:1px solid var(--line);border-right:4px solid var(--bank);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .acc.k-instapay{border-right-color:var(--insta)}
+  .acc.k-wallet{border-right-color:var(--wallet)}
+  .acc.same{background:var(--okbg);border-color:#bfe5cd;border-right-color:var(--ok)}
+  .acc-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .prov{font-weight:700}
+  .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--pri2);color:var(--pri)}
+  .tag.k-instapay{background:#efe8fa;color:var(--insta)}
+  .tag.k-wallet{background:#fbeaea;color:var(--wallet)}
+  .tag.pref{background:#fff3e0;color:var(--warn)}
+  .tag.samet{background:var(--ok);color:#fff}
+  .holder{color:var(--muted);font-size:13px;margin-top:2px}
+  .frow{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;margin-top:8px}
+  .flbl{flex:0 0 100%;font-size:12px;color:var(--muted)}
+  .fval{flex:1;min-width:0;direction:ltr;text-align:left;font-weight:700;font-size:15px;word-break:break-all;font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .copy{flex:none;border:0;background:var(--pri);color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer;min-width:64px}
+  .copy:active{transform:scale(.96)}
+  .copy.done{background:var(--ok)}
+  .acc-note{font-size:12px;color:var(--muted);margin-top:6px}
+  .acc-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .sbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:none}
+  .sbtn.wa{color:#128c4a;border-color:#bfe5cd}
+  .sbtn.del{color:var(--danger)}
+  .party-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .party-note{font-size:13px;color:var(--muted);margin:0 2px 8px}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px}
+  .sec{font-size:13px;font-weight:700;color:var(--muted);margin:14px 4px 8px;display:flex;align-items:center;gap:6px}
+  .card.own{border:2px solid #d4a63a;background:#fffdf6}
+  .card.own .avatar{background:#d4a63a;color:#fff}
+  .owntag{flex:none;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#fbefd0;color:#8a6410}
+  #offline{background:#fff3e0;color:var(--warn);font-size:13px;font-weight:600;padding:8px 12px;border-radius:10px;margin:8px 0 0}
+
+  .fab{position:fixed;left:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;border:0;background:var(--pri);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(15,76,92,.35);cursor:pointer}
+
+  /* ---------- Forms / Modal ---------- */
+  .fld{display:block;margin-bottom:12px}
+  .fld span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;outline:none}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--pri)}
+  .ltr{direction:ltr;text-align:left}
+  .chk{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600}
+  .btn{width:100%;border:0;border-radius:12px;padding:12px;background:var(--pri);color:#fff;font-weight:700;cursor:pointer}
+  .btn.ghost{background:#eef1f4;color:var(--ink)}
+  .btn:disabled{opacity:.6}
+  .err{color:var(--danger);font-size:13px;min-height:18px;margin-bottom:6px}
+  #modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:#fff;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+  .sheet h2{margin:0 0 14px;font-size:18px}
+  .sheet .btns{display:flex;gap:8px}
+  @media(min-width:600px){#modal{align-items:center}.sheet{border-radius:18px}}
+
+  #toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#1d2730;color:#fff;padding:9px 18px;border-radius:999px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:60}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ================= Login ================= -->
+<section id="login" class="hidden">
+  <form class="login-box" id="loginForm">
+    <h1>دليل الحسابات</h1>
+    <p>حسابات البنوك وInstaPay والمحافظ للموردين</p>
+    <label class="fld"><span>الإيميل</span><input type="email" id="lEmail" class="ltr" autocomplete="username" required></label>
+    <label class="fld"><span>كلمة السر</span><input type="password" id="lPass" class="ltr" autocomplete="current-password" required></label>
+    <div class="err" id="lErr"></div>
+    <button class="btn" id="lBtn">دخول</button>
+  </form>
+</section>
+
+<!-- ================= App ================= -->
+<section id="app" class="hidden">
+  <header>
+    <div class="hrow">
+      <h1>دليل الحسابات</h1>
+      <button class="hbtn" id="refreshBtn" title="تحديث">↻</button>
+      <button class="hbtn" id="logoutBtn">خروج</button>
+    </div>
+    <input class="search" id="search" type="search" placeholder="ابحث باسم المورد أو البنك أو الرقم…" autocomplete="off">
+  </header>
+
+  <div class="tools">
+    <div class="bankbar">
+      <label for="myBank">هحوّل من / هودع في:</label>
+      <select id="myBank"></select>
+    </div>
+    <label class="only hidden" id="onlyWrap"><input type="checkbox" id="onlyBank"> اعرض اللي ليهم حساب في البنك ده بس</label>
+  </div>
+
+  <main>
+    <div id="offline" class="hidden">⚠️ مش قادر يوصل للسيرفر — بتشوف آخر نسخة محفوظة على الجهاز</div>
+    <div class="count" id="count"></div>
+    <div id="list"></div>
+  </main>
+
+  <button class="fab" id="addPartyBtn" title="إضافة مورد">+</button>
+</section>
+
+<div id="modal" class="hidden"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<datalist id="dlBanks"></datalist>
+<datalist id="dlWallets"></datalist>
+
+<script>
+/* =========================================================
+   الإعدادات — حط هنا بيانات مشروع Supabase
+   (Project Settings > API)
+   ========================================================= */
+const SUPABASE_URL      = 'https://vceakbwhkwcfbaduktnh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Qb9h7-caLepG0Tzc8HUx-g_iPnKCpll';
+
+const sb = supabase.createClient(SUPABASE_URL.replace(/\/rest\/v1\/?$/,'').replace(/\/$/,''), SUPABASE_ANON_KEY);
+
+/* ---------- ثوابت ---------- */
+const BANKS = [
+  'البنك الأهلي المصري','بنك مصر','بنك القاهرة','البنك التجاري الدولي CIB','بنك الإسكندرية',
+  'بنك QNB','بنك الإمارات دبي الوطني','بنك أبوظبي الأول FAB','بنك أبوظبي التجاري ADCB','مصرف أبوظبي الإسلامي',
+  'بنك فيصل الإسلامي','بنك البركة','المصرف المتحد','بنك التعمير والإسكان','البنك الزراعي المصري',
+  'البنك العربي الأفريقي الدولي','البنك العربي','البنك المصري لتنمية الصادرات','البنك المصري الخليجي','البنك العقاري المصري العربي',
+  'بنك الكويت الوطني NBK','البنك الأهلي الكويتي','البنك الأهلي المتحد','بنك التجاري وفا','بنك ABC',
+  'بنك HSBC','بنك المشرق','بنك كريدي أجريكول','بنك SAIB','بنك الاستثمار العربي',
+  'المصرف العربي الدولي','بنك مصر إيران للتنمية','البنك الأهلي اليوناني','بنك نكست','بنك ميد'
+];
+const WALLETS = ['فودافون كاش','اتصالات كاش (e& cash)','أورنج كاش','وي باي (WE Pay)','محفظة بنك مصر','محفظة البنك الأهلي'];
+const KIND = {
+  bank:     {label:'حساب بنكي', num:'رقم الحساب'},
+  instapay: {label:'InstaPay',  num:'رقم / عنوان'},
+  wallet:   {label:'محفظة',     num:'رقم المحفظة'}
+};
+const KIND_ORDER = {bank:0, instapay:1, wallet:2};
+const CACHE_KEY = 'acc_dir_cache_v1';
+const BANK_KEY  = 'acc_dir_mybank';
+
+/* ---------- الحالة ---------- */
+const S = { parties:[], accounts:[], q:'', myBank:'', onlyBank:false, open:new Set() };
+
+/* ---------- أدوات ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').toLowerCase()
+  .replace(/[أإآا]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ـ/g,'')
+  .replace(/[ً-ْ]/g,'').replace(/\s+/g,' ').trim();
+const raw = s => String(s ?? '').replace(/\s+/g,'');
+const group4 = s => { const r = raw(s); return /^[A-Za-z0-9]+$/.test(r) && r.length >= 12 ? r.replace(/(.{4})(?=.)/g,'$1 ') : String(s ?? ''); };
+const accsOf = pid => S.accounts.filter(a => a.party_id === pid);
+const isSame = a => !!S.myBank && a.kind === 'bank' && a.provider === S.myBank && !S.parties.find(p => p.id === a.party_id)?.is_own;
+
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+async function copyText(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, 99999);
+    let ok = false; try { ok = document.execCommand('copy'); } catch(_){}
+    ta.remove(); return ok;
+  }
+}
+
+function accountText(a){
+  const p = S.parties.find(x => x.id === a.party_id);
+  const lines = [];
+  if (p) lines.push(`${p.name}`);
+  lines.push(`${a.kind === 'bank' ? '🏦' : a.kind === 'instapay' ? '⚡ InstaPay' : '📱'} ${a.provider}`);
+  if (a.holder_name)    lines.push(`الاسم: ${a.holder_name}`);
+  if (a.account_number) lines.push(`${KIND[a.kind].num}: ${raw(a.account_number)}`);
+  if (a.iban)           lines.push(`IBAN: ${raw(a.iban)}`);
+  if (a.branch)         lines.push(`الفرع: ${a.branch}`);
+  return lines.join('\n');
+}
+
+/* ---------- الكاش (للفتح السريع) ---------- */
+function saveCache(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({p:S.parties, a:S.accounts})); }catch(e){} }
+function loadCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(c){ S.parties=c.p||[]; S.accounts=c.a||[]; return true; } }catch(e){} return false; }
+function clearCache(){ try{ localStorage.removeItem(CACHE_KEY); }catch(e){} }
+
+/* ---------- تحميل البيانات ---------- */
+async function loadData(){
+  const [p, a] = await Promise.all([
+    sb.from('parties').select('*').order('name'),
+    sb.from('accounts').select('*')
+  ]);
+  if (p.error || a.error){
+    console.error(p.error || a.error);
+    $('offline').classList.remove('hidden');
+    if (!S.parties.length) $('list').innerHTML = '<div class="empty">مش قادر يوصل للسيرفر ومفيش نسخة محفوظة.<br>جرّب تاني بعد شوية.</div>';
+    return;
+  }
+  $('offline').classList.add('hidden');
+  S.parties = p.data; S.accounts = a.data;
+  saveCache(); fillBankSelect(); render();
+}
+
+/* ---------- الفلاتر ---------- */
+function fillBankSelect(){
+  const ownIds = new Set(S.parties.filter(p => p.is_own).map(p => p.id));
+  const banksOf = own => [...new Set(S.accounts.filter(a => a.kind==='bank' && ownIds.has(a.party_id) === own).map(a => a.provider))].sort((x,y)=>x.localeCompare(y,'ar'));
+  const ours = banksOf(true);
+  const used = banksOf(false).filter(b => !ours.includes(b));
+  const rest = [...new Set(BANKS)].filter(b => !ours.includes(b) && !used.includes(b));
+  const grp = (label, list) => list.length ? `<optgroup label="${label}">${list.map(b=>`<option>${esc(b)}</option>`).join('')}</optgroup>` : '';
+  const sel = $('myBank');
+  sel.innerHTML = `<option value="">— اختار البنك —</option>` +
+    grp('🏢 بنوكنا', ours) + grp('بنوك عند الموردين', used) + grp('كل البنوك', rest);
+  sel.value = S.myBank;
+  $('onlyWrap').classList.toggle('hidden', !S.myBank);
+}
+
+/* ---------- العرض ---------- */
+function render(){
+  const q = norm(S.q);
+  let list = S.parties.filter(p => !p.is_own);
+  let own  = S.parties.filter(p => p.is_own);
+
+  if (q){
+    list = list.filter(p => {
+      if (norm(p.name).includes(q) || norm(p.notes).includes(q) || raw(p.phone).includes(raw(q))) return true;
+      return accsOf(p.id).some(a =>
+        norm(`${a.provider} ${a.holder_name||''}`).includes(q) ||
+        (raw(q).length >= 3 && (raw(a.account_number).includes(raw(q)) || raw(a.iban).includes(raw(q)))));
+    });
+  }
+
+  const match = p => !q || norm(p.name).includes(q) || norm(p.notes).includes(q) || raw(p.phone).includes(raw(q)) ||
+    accsOf(p.id).some(a => norm(`${a.provider} ${a.holder_name||''}`).includes(q) ||
+      (raw(q).length >= 3 && (raw(a.account_number).includes(raw(q)) || raw(a.iban).includes(raw(q)))));
+  own = own.filter(match);
+  let rows = list.map(p => ({p, same: accsOf(p.id).some(isSame)}));
+  if (S.myBank && S.onlyBank) rows = rows.filter(r => r.same);
+  rows.sort((x,y) => (y.same - x.same) || x.p.name.localeCompare(y.p.name,'ar'));
+
+  const nSup = S.parties.filter(p => !p.is_own).length;
+  $('count').textContent = '';
+
+  if (!S.parties.length){
+    $('list').innerHTML = `<div class="empty">لسه مفيش موردين.<br>دوس على <b>+</b> علشان تضيف أول مورد.</div>`;
+    return;
+  }
+  if (!rows.length && !own.length){ $('list').innerHTML = `<div class="empty">مفيش نتايج</div>`; return; }
+
+  const ownHTML = own.length ? `<div class="sec">🏢 حسابات شركتنا</div>` + own.map(p => cardHTML(p, false, q, true)).join('') : '';
+  const supTitle = `<div class="sec">الموردين · ${rows.length} من ${nSup}` + (S.myBank ? ` · ${rows.filter(r=>r.same).length} ليهم حساب في ${esc(S.myBank)}` : '') + `</div>`;
+  $('list').innerHTML = ownHTML + supTitle + (rows.length ? rows.map(({p, same}) => cardHTML(p, same, q, rows.length <= 3)).join('') : `<div class="empty">مفيش موردين مطابقين</div>`);
+}
+
+function cardHTML(p, same, q, few){
+  {
+    const accs = accsOf(p.id).sort((a,b) =>
+      (isSame(b) - isSame(a)) || (b.is_preferred - a.is_preferred) || (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || a.provider.localeCompare(b.provider,'ar'));
+    const open = S.open.has(p.id) || (q && few);
+    const counts = ['bank','instapay','wallet'].map(k => { const n = accs.filter(a=>a.kind===k).length; return n ? `${n} ${KIND[k].label}` : ''; }).filter(Boolean).join(' · ');
+    return `
+    <div class="card ${open?'open':''} ${p.is_own?'own':''}">
+      <div class="card-head" data-act="toggle" data-id="${p.id}">
+        <div class="avatar">${esc(p.name.trim().charAt(0))}</div>
+        <div class="ch-main">
+          <div class="name">${esc(p.name)}</div>
+          <div class="meta">${counts || 'مفيش حسابات'}</div>
+        </div>
+        ${p.is_own ? `<span class="owntag">شركتنا</span>` : same ? `<span class="badge">✓ نفس البنك</span>` : ''}
+        <span class="chev">▾</span>
+      </div>
+      ${open ? `<div class="card-body">
+        ${p.notes ? `<div class="party-note">📝 ${esc(p.notes)}</div>` : ''}
+        ${accs.map(accHTML).join('') || '<div class="party-note">لسه مفيش حسابات للمورد ده.</div>'}
+        <div class="party-actions">
+          <button class="sbtn" data-act="addAcc" data-id="${p.id}">+ إضافة حساب</button>
+          <button class="sbtn" data-act="editParty" data-id="${p.id}">تعديل المورد</button>
+          ${p.phone ? `<a class="sbtn" href="tel:${esc(raw(p.phone))}">📞 اتصال</a>
+                       <button class="sbtn" data-act="copyPhone" data-id="${p.id}">نسخ رقمه</button>` : ''}
+        </div>
+      </div>` : ''}
+    </div>`;
+  }
+}
+
+function accHTML(a){
+  const same = isSame(a);
+  const field = (label, val, f) => val ? `
+    <div class="frow">
+      <span class="flbl">${label}</span>
+      <span class="fval">${esc(group4(val))}</span>
+      <button class="copy" data-act="copy" data-id="${a.id}" data-f="${f}">نسخ</button>
+    </div>` : '';
+  return `
+  <div class="acc k-${a.kind} ${same?'same':''}">
+    <div class="acc-top">
+      <span class="prov">${esc(a.provider)}</span>
+      ${a.kind !== 'bank' ? `<span class="tag k-${a.kind}">${KIND[a.kind].label}</span>` : ''}
+      ${same ? `<span class="tag samet">نفس بنكك</span>` : ''}
+      ${a.is_preferred ? `<span class="tag pref">★ مفضل</span>` : ''}
+    </div>
+    ${a.holder_name ? `<div class="holder">باسم: ${esc(a.holder_name)}</div>` : ''}
+    ${field(KIND[a.kind].num, a.account_number, 'account_number')}
+    ${a.kind === 'bank' ? field('IBAN', a.iban, 'iban') : ''}
+    ${a.branch ? `<div class="acc-note">الفرع: ${esc(a.branch)}</div>` : ''}
+    ${a.notes ? `<div class="acc-note">📝 ${esc(a.notes)}</div>` : ''}
+    <div class="acc-actions">
+      <button class="sbtn" data-act="copyAll" data-id="${a.id}">نسخ الكل</button>
+      <button class="sbtn wa" data-act="wa" data-id="${a.id}">واتساب</button>
+      <button class="sbtn" data-act="editAcc" data-id="${a.id}">تعديل</button>
+      <button class="sbtn del" data-act="delAcc" data-id="${a.id}">حذف</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- المودال ---------- */
+function openModal(html){ $('sheet').innerHTML = html; $('modal').classList.remove('hidden'); }
+function closeModal(){ $('modal').classList.add('hidden'); $('sheet').innerHTML = ''; }
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+/* ---- فورم المورد ---- */
+function partyForm(p){
+  openModal(`
+    <h2>${p ? 'تعديل المورد' : 'مورد جديد'}</h2>
+    <form id="pForm">
+      <label class="fld"><span>الاسم</span><input id="pName" required value="${esc(p?.name)}"></label>
+      <label class="fld"><span>رقم التليفون (اختياري)</span><input id="pPhone" class="ltr" inputmode="tel" value="${esc(p?.phone)}"></label>
+      <label class="fld"><span>ملاحظات (اختياري)</span><textarea id="pNotes" rows="2">${esc(p?.notes)}</textarea></label>
+      <label class="chk"><input type="checkbox" id="pOwn" ${p?.is_own?'checked':''}> 🏢 دي حسابات شركتنا (مش مورد)</label>
+      <div class="err" id="pErr"></div>
+      <div class="btns">
+        <button class="btn" id="pSave">حفظ</button>
+        <button type="button" class="btn ghost" onclick="closeModal()">إلغاء</button>
+      </div>
+      ${p ? `<button type="button" class="btn ghost" style="margin-top:8px;color:var(--danger)" id="pDel">حذف المورد وكل حساباته</button>` : ''}
+    </form>`);
+
+  $('pForm').onsubmit = async e => {
+    e.preventDefault();
+    const row = { name:$('pName').value.trim(), phone:$('pPhone').value.trim()||null, notes:$('pNotes').value.trim()||null, is_own:$('pOwn').checked };
+    if (!row.name) return;
+    $('pSave').disabled = true;
+    const res = p ? await sb.from('parties').update(row).eq('id', p.id).select().single()
+                  : await sb.from('parties').insert(row).select().single();
+    if (res.error){ $('pErr').textContent = 'حصل خطأ: ' + res.error.message; $('pSave').disabled = false; return; }
+    if (p) Object.assign(p, res.data); else { S.parties.push(res.data); S.open.add(res.data.id); }
+    saveCache(); closeModal(); render(); toast('اتحفظ ✓');
+    if (!p) accountForm(null, res.data.id);
+  };
+  if (p) $('pDel').onclick = async () => {
+    if (!confirm(`متأكد إنك عايز تحذف "${p.name}" وكل حساباته؟`)) return;
+    const { error } = await sb.from('parties').delete().eq('id', p.id);
+    if (error){ $('pErr').textContent = 'حصل خطأ: ' + error.message; return; }
+    S.parties = S.parties.filter(x => x.id !== p.id);
+    S.accounts = S.accounts.filter(x => x.party_id !== p.id);
+    saveCache(); closeModal(); fillBankSelect(); render(); toast('اتحذف');
+  };
+}
+
+/* ---- فورم الحساب ---- */
+function accountForm(a, partyId){
+  const pid = a?.party_id || partyId;
+  const p = S.parties.find(x => x.id === pid);
+  const kind = a?.kind || 'bank';
+  openModal(`
+    <h2>${a ? 'تعديل حساب' : 'حساب جديد'} — ${esc(p?.name)}</h2>
+    <form id="aForm">
+      <label class="fld"><span>النوع</span>
+        <select id="aKind">
+          <option value="bank" ${kind==='bank'?'selected':''}>حساب بنكي</option>
+          <option value="instapay" ${kind==='instapay'?'selected':''}>InstaPay</option>
+          <option value="wallet" ${kind==='wallet'?'selected':''}>محفظة</option>
+        </select></label>
+      <label class="fld" id="provWrap"><span id="provLbl">البنك</span><input id="aProv" autocomplete="off" value="${esc(a?.provider)}"></label>
+      <label class="fld"><span>اسم صاحب الحساب</span><input id="aHolder" value="${esc(a?.holder_name)}"></label>
+      <label class="fld"><span id="numLbl">رقم الحساب</span><input id="aNum" class="ltr" autocomplete="off" value="${esc(a?.account_number)}"></label>
+      <label class="fld bankOnly"><span>IBAN (اختياري)</span><input id="aIban" class="ltr" autocomplete="off" placeholder="EG.." value="${esc(a?.iban)}"></label>
+      <label class="fld bankOnly"><span>الفرع (اختياري)</span><input id="aBranch" value="${esc(a?.branch)}"></label>
+      <label class="chk"><input type="checkbox" id="aPref" ${a?.is_preferred?'checked':''}> ★ حساب مفضل (يظهر الأول)</label>
+      <label class="fld"><span>ملاحظات (اختياري)</span><textarea id="aNotes" rows="2">${esc(a?.notes)}</textarea></label>
+      <div class="err" id="aErr"></div>
+      <div class="btns">
+        <button class="btn" id="aSave">حفظ</button>
+        <button type="button" class="btn ghost" onclick="closeModal()">إلغاء</button>
+      </div>
+    </form>`);
+
+  const sync = () => {
+    const k = $('aKind').value;
+    $('provLbl').textContent = k === 'bank' ? 'البنك' : k === 'wallet' ? 'المحفظة' : 'البنك المربوط بيه (اختياري)';
+    $('aProv').setAttribute('list', k === 'wallet' ? 'dlWallets' : 'dlBanks');
+    $('numLbl').textContent = k === 'bank' ? 'رقم الحساب' : k === 'wallet' ? 'رقم المحفظة' : 'رقم التليفون أو عنوان InstaPay';
+    $('aNum').setAttribute('inputmode', k === 'bank' ? 'numeric' : k === 'wallet' ? 'tel' : 'text');
+    document.querySelectorAll('.bankOnly').forEach(el => el.classList.toggle('hidden', k !== 'bank'));
+  };
+  $('aKind').onchange = sync; sync();
+
+  $('aForm').onsubmit = async e => {
+    e.preventDefault();
+    const k = $('aKind').value;
+    let provider = $('aProv').value.trim();
+    if (k === 'instapay' && !provider) provider = 'InstaPay';
+    if (!provider){ $('aErr').textContent = k === 'bank' ? 'اكتب اسم البنك' : 'اكتب اسم المحفظة'; return; }
+    if (!$('aNum').value.trim() && !$('aIban').value.trim()){ $('aErr').textContent = 'اكتب الرقم'; return; }
+    const row = {
+      party_id: pid, kind: k, provider,
+      holder_name: $('aHolder').value.trim() || null,
+      account_number: $('aNum').value.trim() || null,
+      iban: k === 'bank' ? ($('aIban').value.trim().toUpperCase() || null) : null,
+      branch: k === 'bank' ? ($('aBranch').value.trim() || null) : null,
+      is_preferred: $('aPref').checked,
+      notes: $('aNotes').value.trim() || null
+    };
+    $('aSave').disabled = true;
+    const res = a ? await sb.from('accounts').update(row).eq('id', a.id).select().single()
+                  : await sb.from('accounts').insert(row).select().single();
+    if (res.error){ $('aErr').textContent = 'حصل خطأ: ' + res.error.message; $('aSave').disabled = false; return; }
+    if (a) Object.assign(a, res.data); else S.accounts.push(res.data);
+    S.open.add(pid); saveCache(); closeModal(); fillBankSelect(); render(); toast('اتحفظ ✓');
+  };
+}
+
+/* ---------- الأحداث ---------- */
+$('list').addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const id = el.dataset.id, act = el.dataset.act;
+  const acc = () => S.accounts.find(a => a.id === id);
+
+  if (act === 'toggle'){ S.open.has(id) ? S.open.delete(id) : S.open.add(id); render(); }
+  else if (act === 'copy'){
+    const ok = await copyText(raw(acc()[el.dataset.f]));
+    if (ok){ el.textContent = '✓'; el.classList.add('done'); toast('اتنسخ ✓'); setTimeout(()=>{ el.textContent='نسخ'; el.classList.remove('done'); }, 1500); }
+    else toast('مقدرتش أنسخ');
+  }
+  else if (act === 'copyAll'){ toast(await copyText(accountText(acc())) ? 'اتنسخت كل البيانات ✓' : 'مقدرتش أنسخ'); }
+  else if (act === 'wa'){ window.open('https://wa.me/?text=' + encodeURIComponent(accountText(acc())), '_blank'); }
+  else if (act === 'copyPhone'){ const p = S.parties.find(x=>x.id===id); toast(await copyText(raw(p.phone)) ? 'اتنسخ ✓' : 'مقدرتش أنسخ'); }
+  else if (act === 'addAcc') accountForm(null, id);
+  else if (act === 'editAcc') accountForm(acc());
+  else if (act === 'editParty') partyForm(S.parties.find(x => x.id === id));
+  else if (act === 'delAcc'){
+    const a = acc();
+    if (!confirm(`حذف حساب ${a.provider}؟`)) return;
+    const { error } = await sb.from('accounts').delete().eq('id', id);
+    if (error){ toast('حصل خطأ'); return; }
+    S.accounts = S.accounts.filter(x => x.id !== id); saveCache(); fillBankSelect(); render(); toast('اتحذف');
+  }
+});
+
+$('search').addEventListener('input', e => { S.q = e.target.value; render(); });
+$('myBank').addEventListener('change', e => {
+  S.myBank = e.target.value; try{ localStorage.setItem(BANK_KEY, S.myBank); }catch(_){}
+  $('onlyWrap').classList.toggle('hidden', !S.myBank); render();
+});
+$('onlyBank').addEventListener('change', e => { S.onlyBank = e.target.checked; render(); });
+$('addPartyBtn').onclick = () => partyForm(null);
+$('refreshBtn').onclick = async () => { await loadData(); toast('اتحدّث ✓'); };
+$('logoutBtn').onclick = async () => { await sb.auth.signOut(); };
+
+$('loginForm').onsubmit = async e => {
+  e.preventDefault();
+  $('lBtn').disabled = true; $('lErr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email:$('lEmail').value.trim(), password:$('lPass').value });
+  $('lBtn').disabled = false;
+  if (error){
+    const m = (error.message||'').toLowerCase();
+    $('lErr').textContent =
+      m.includes('invalid login') ? 'الإيميل أو كلمة السر غلط' :
+      m.includes('not confirmed') ? 'الإيميل لسه متأكدش — علّم Auto Confirm أو أكّد المستخدم من Supabase' :
+      m.includes('fetch') || m.includes('network') ? 'مش قادر يوصل لـ Supabase — راجع الرابط والنت' :
+      'خطأ: ' + error.message;
+  }
+};
+
+/* ---------- التشغيل ---------- */
+function showApp(){
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  try{ S.myBank = localStorage.getItem(BANK_KEY) || ''; }catch(_){}
+  if (loadCache()){ fillBankSelect(); render(); } else { fillBankSelect(); $('list').innerHTML = '<div class="empty">جاري التحميل…</div>'; }
+  loadData();
+}
+function showLogin(){
+  clearCache(); S.parties = []; S.accounts = [];
+  $('app').classList.add('hidden'); $('login').classList.remove('hidden');
+}
+
+$('dlBanks').innerHTML   = BANKS.map(b => `<option value="${esc(b)}">`).join('');
+$('dlWallets').innerHTML = WALLETS.map(b => `<option value="${esc(b)}">`).join('');
+
+let started = false;
+sb.auth.onAuthStateChange((event, session) => {
+  if (session && !started){ started = true; showApp(); }
+  else if (!session){ started = false; showLogin(); }
+});
+</script>
+</body>
+</html>
