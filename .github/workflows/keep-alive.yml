@@ -1,4 +1,5 @@
 # بيكلم Supabase كل يومين علشان المشروع المجاني ميتوقفش بسبب عدم الاستخدام
+# بياخد الرابط والمفتاح من index.html نفسه (نفس المفتاح العام اللي الموقع بيستخدمه)
 name: Supabase keep-alive
 
 on:
@@ -7,18 +8,21 @@ on:
   workflow_dispatch:          # زرار تشغيل يدوي للتجربة
 
 permissions:
+  contents: read
   actions: write              # علشان يمنع GitHub إنه يوقف الجدولة بعد 60 يوم
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Ping Supabase
         run: |
-          code=$(curl -s -o out.txt -w "%{http_code}" -X POST \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/keep_alive" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+          URL=$(grep -oP "SUPABASE_URL\s*=\s*'\K[^']+" index.html | sed -E 's#/rest/v1/?$##; s#/$##')
+          KEY=$(grep -oP "SUPABASE_ANON_KEY\s*=\s*'\K[^']+" index.html)
+          code=$(curl -s -o out.txt -w "%{http_code}" -X POST "$URL/rest/v1/rpc/keep_alive" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
             -H "Content-Type: application/json" -d '{}')
           echo "HTTP $code"; cat out.txt; echo
           test "$code" = "200"
