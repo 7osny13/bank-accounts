@@ -75,6 +75,9 @@
   .copy:active{transform:scale(.96)}
   .copy.done{background:var(--ok)}
   .acc-note{font-size:12px;color:var(--muted);margin-top:6px}
+  .copyall-big{display:block;width:100%;margin-top:10px;border:0;border-radius:10px;padding:11px;background:#d4a63a;color:#fff;font-weight:700;cursor:pointer}
+  .copyall-big:active{transform:scale(.98)}
+  .copyall-big.done{background:var(--ok)}
   .acc-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
   .sbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:none}
   .sbtn.wa{color:#128c4a;border-color:#bfe5cd}
@@ -221,6 +224,13 @@ async function copyText(text){
 
 function accountText(a){
   const p = S.parties.find(x => x.id === a.party_id);
+  if (p?.is_own){
+    const l = [`اسم البنك: ${a.provider}`];
+    if (a.holder_name)    l.push(`اسم الحساب: ${a.holder_name}`);
+    if (a.account_number) l.push(`رقم الحساب: ${raw(a.account_number)}`);
+    if (a.iban)           l.push(`IBAN: ${raw(a.iban)}`);
+    return l.join('\n');
+  }
   const lines = [];
   if (p) lines.push(`${p.name}`);
   lines.push(`${a.kind === 'bank' ? '🏦' : a.kind === 'instapay' ? '⚡ InstaPay' : '📱'} ${a.provider}`);
@@ -338,6 +348,7 @@ function cardHTML(p, same, q, few){
 
 function accHTML(a){
   const same = isSame(a);
+  const own = !!S.parties.find(p => p.id === a.party_id)?.is_own;
   const field = (label, val, f) => val ? `
     <div class="frow">
       <span class="flbl">${label}</span>
@@ -357,8 +368,9 @@ function accHTML(a){
     ${a.kind === 'bank' ? field('IBAN', a.iban, 'iban') : ''}
     ${a.branch ? `<div class="acc-note">الفرع: ${esc(a.branch)}</div>` : ''}
     ${a.notes ? `<div class="acc-note">📝 ${esc(a.notes)}</div>` : ''}
+    ${own ? `<button class="copyall-big" data-act="copyAll" data-id="${a.id}">📋 نسخ بيانات الحساب كاملة</button>` : ''}
     <div class="acc-actions">
-      <button class="sbtn" data-act="copyAll" data-id="${a.id}">نسخ الكل</button>
+      ${own ? '' : `<button class="sbtn" data-act="copyAll" data-id="${a.id}">نسخ الكل</button>`}
       <button class="sbtn wa" data-act="wa" data-id="${a.id}">واتساب</button>
       <button class="sbtn" data-act="editAcc" data-id="${a.id}">تعديل</button>
       <button class="sbtn del" data-act="delAcc" data-id="${a.id}">حذف</button>
@@ -485,7 +497,11 @@ $('list').addEventListener('click', async e => {
     if (ok){ el.textContent = '✓'; el.classList.add('done'); toast('اتنسخ ✓'); setTimeout(()=>{ el.textContent='نسخ'; el.classList.remove('done'); }, 1500); }
     else toast('مقدرتش أنسخ');
   }
-  else if (act === 'copyAll'){ toast(await copyText(accountText(acc())) ? 'اتنسخت كل البيانات ✓' : 'مقدرتش أنسخ'); }
+  else if (act === 'copyAll'){
+    const ok = await copyText(accountText(acc()));
+    toast(ok ? 'اتنسخت كل البيانات ✓' : 'مقدرتش أنسخ');
+    if (ok && el.classList.contains('copyall-big')){ const t = el.textContent; el.textContent = '✓ اتنسخت'; el.classList.add('done'); setTimeout(()=>{ el.textContent = t; el.classList.remove('done'); }, 1500); }
+  }
   else if (act === 'wa'){ window.open('https://wa.me/?text=' + encodeURIComponent(accountText(acc())), '_blank'); }
   else if (act === 'copyPhone'){ const p = S.parties.find(x=>x.id===id); toast(await copyText(raw(p.phone)) ? 'اتنسخ ✓' : 'مقدرتش أنسخ'); }
   else if (act === 'addAcc') accountForm(null, id);
